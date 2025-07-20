@@ -47,9 +47,9 @@ Reload i3 configuration by pressing `mod+Shift+r`
 
 When notifications are enabled a popup will display the brightness level.
 
-Example of notifications using [dunstify](https://github.com/dunst-project/dunst):
+Example of notifications using [dunstify](https://github.com/dunst-project/dunst):  
 
-![Brightness Notification](https://github.com/lemon-hope/i3-backlight-clean/blob/master/dunst-notification.png)
+![Brightness Notification](https://github.com/lemon-hope/i3-backlight-clean/blob/master/dunst-notification.png) 
 
 ## Special thanks
 * Felipe Buiras [@fmorisan](https://github.com/fmorisan/)
