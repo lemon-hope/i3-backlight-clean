@@ -1,26 +1,25 @@
 #!/bin/bash
 #
-#  i3-volume
+#  i3-backlight-clean
 #
-#  Volume control and volume notifications for i3wm.
+#   A minimal and cleaned version of i3-backlight control notifications for i3wm.
 #
 #  Requires:
-#    alsa-utils or pulseaudio-utils
-#    awk (POSIX compatible)
+#    brightnessctl
+#    cut (POSIX compatible)
 #
 #  Optional:
 #    A libnotify compatible notification daemon such as notify-osd or dunst
 #    notify-send (libnotify) or dunstify (dunst)
 #
-#  Copyright (c) 2016 Beau Hastings. All rights reserved.
 #  License: GNU General Public License v2
-#
-#  Author: Beau Hastings <beausy@gmail.com>
-#  URL: https://github.com/hastinbe/i3-volume
+#  Author: lemon-hope
+#  Inspired by / cloned from : https://github.com/fmorisan/i3-backlight/tree/master  
 
 # Get the backlight as a percentage.
 get_backlight() {
-    xbacklight -get | cut -d. -f1
+	brightnessctl | grep 'Current brightness' | cut -d' ' -f4 | tr -d '()'
+
 }
 
 
@@ -29,7 +28,7 @@ get_backlight() {
 # Arguments:
 #   Step        (integer) Percentage to increase by.
 raise_backlight() {
-    xbacklight -inc $step
+    brightnessctl set +$1%
 }
 
 
@@ -38,64 +37,22 @@ raise_backlight() {
 # Arguments:
 #   Step        (integer) Percentage to decrease by.
 lower_backlight() {
-    xbacklight -dec $step
+    brightnessctl set $1%-
 }
 
 
-# Set volume.
-#
-# Arguments:
-#   Step        (integer) Percentage to decrease by.
-set_backlight() {
-    xbacklight -set $1
-}
-
-
-# Gets an icon for the provided volume.
-#
-# Arguments:
-#   Volume      (integer) An integer indicating the volume.
-#
-# Returns:
-#   The volume icon name.
-get_backlight_icon() {
-    local vol="$1"
-    local icon
-
-    if $opt_use_legacy_icons; then
-        if [ "$vol" -ge 70 ]; then icon="audio-volume-high"
-        elif [ "$vol" -ge 40 ]; then icon="audio-volume-medium"
-        elif [ "$vol" -gt 0 ]; then icon="audio-volume-low"
-        else icon="audio-volume-low"
-        fi
-    else
-        if [ "$vol" -gt 100 ]; then icon="audio-volume-overamplified-symbolic.symbolic"
-        elif [ "$vol" -ge 70 ]; then icon="audio-volume-high-symbolic.symbolic"
-        elif [ "$vol" -ge 40 ]; then icon="audio-volume-medium-symbolic.symbolic"
-        elif [ "$vol" -gt 0 ]; then icon="audio-volume-low-symbolic.symbolic"
-        else icon="audio-volume-low-symbolic.symbolic"
-        fi
-    fi
-
-    echo "${icon}"
-}
-
-# Display a notification indicating the current volume.
+# Display a notification indicating the current brightness level.
 notify_backlight() {
-    local vol=$(get_backlight)
-    local icon=$(get_volume_icon "$vol")
-    local text="Brightness ${vol}%"
+    local br=$(get_backlight)
+    local icon="display-brightness-symbolic"
+    local text="Brightness ${br}"
 
     if $opt_show_volume_progress; then
-        local progress=$(get_progress_bar "$vol")
+        local progress=$(get_progress_bar "$br")
         text="$text $progress"
     fi
 
-    if $opt_use_dunstify; then
-        dunstify -i "$icon" -t $expires -h int:value:"$vol" -h string:synchronous:brightness "$text" -r 1000
-    else
-        notify-send -i "$icon" -t $expires -h int:value:"$vol" -h string:synchronous:brightness "$text"
-    fi
+    dunstify -i "$icon" -t $expires -h int:value:"$br" -h string:synchronous:brightness "$text" -r 1000
 }
 
 # Updates the status line.
@@ -103,11 +60,11 @@ notify_backlight() {
 # Arguments:
 #   signal  (string) The signal used to update the status line.
 #   proc    (string) The name of the status line process.
-update_statusline() {
-    local signal="$1"
-    local proc="$2"
-    pkill "-$signal" "$proc"
-}
+#update_statusline() {
+#    local signal="$1"
+#    local proc="$2"
+#    pkill "-$signal" "$proc"
+#}
 
 # Generates a progress bar for the provided value.
 #
@@ -158,15 +115,12 @@ opt_increase_backlight=false
 opt_notification=false
 opt_set_backlight=false
 opt_show_volume_progress=false
-opt_use_amixer=false
 opt_use_dunstify=false
-opt_use_legacy_icons=false
 card=""
 signal=""
 sink=""
 statusline=""
 step=5
-backlight_set="100"
 expires="1500"
 
 while getopts ":ac:d:e:hi:lmnps:t:u:v:y" o; do
@@ -219,9 +173,6 @@ if ${opt_decrease_backlight}; then
     lower_backlight $step
 fi
 
-if ${opt_set_backlight}; then
-    set_backlight $backlight_set
-fi
 
 # The options below this line must be last
 if ${opt_notification}; then
