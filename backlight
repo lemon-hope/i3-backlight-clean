@@ -23,7 +23,7 @@ get_backlight() {
 }
 
 
-# Increase volume relative to current volume.
+# Increase brightness relative to current value.
 #
 # Arguments:
 #   Step        (integer) Percentage to increase by.
@@ -32,7 +32,7 @@ raise_backlight() {
 }
 
 
-# Decrease volume relative to current volume.
+# Decrease brightness relative to current value.
 #
 # Arguments:
 #   Step        (integer) Percentage to decrease by.
@@ -47,7 +47,7 @@ notify_backlight() {
     local icon="display-brightness-symbolic"
     local text="Brightness ${br}"
 
-    if $opt_show_volume_progress; then
+    if $opt_show_backlight_progress; then
         local progress=$(get_progress_bar "$br")
         text="$text $progress"
     fi
@@ -55,16 +55,6 @@ notify_backlight() {
     dunstify -i "$icon" -t $expires -h int:value:"$br" -h string:synchronous:brightness "$text" -r 1000
 }
 
-# Updates the status line.
-#
-# Arguments:
-#   signal  (string) The signal used to update the status line.
-#   proc    (string) The name of the status line process.
-#update_statusline() {
-#    local signal="$1"
-#    local proc="$2"
-#    pkill "-$signal" "$proc"
-#}
 
 # Generates a progress bar for the provided value.
 #
@@ -90,19 +80,11 @@ usage() {
 Control volume and related notifications.
 
 Options:
-  -a                use alsa-utils instead of pulseaudio-utils for volume control
-  -c <card>         card number to control (amixer only)
-  -d <amount>       decrease volume
+  -d <amount>       decrease brightness 
   -e <expires>      expiration time of notifications, in milliseconds
-  -i <amount>       increase volume
-  -l                use legacy icons
-  -m                toggle mute
+  -i <amount>       increase brightness
   -n                show notifications
   -p                show text volume progress bar
-  -s <sink_name>    symbolic name of sink (pulseaudio only)
-  -t <process_name> name of status line process. must be used with -u
-  -u <signal>       update status line using signal. must be used with -t
-  -v <value>        set volume
   -y                use dunstify instead of notify-send
   -h                display this help and exit
 " 1>&2
@@ -114,16 +96,12 @@ opt_decrease_backlight=false
 opt_increase_backlight=false
 opt_notification=false
 opt_set_backlight=false
-opt_show_volume_progress=false
+opt_show_backlight_progress=false
 opt_use_dunstify=false
-card=""
-signal=""
-sink=""
-statusline=""
 step=5
 expires="1500"
 
-while getopts ":ac:d:e:hi:lmnps:t:u:v:y" o; do
+while getopts "d:e:hi:n:y" o; do
     case "$o" in
         d)
             opt_decrease_backlight=true
@@ -136,24 +114,8 @@ while getopts ":ac:d:e:hi:lmnps:t:u:v:y" o; do
             opt_increase_backlight=true
             step="${OPTARG}"
             ;;
-        l)
-            opt_use_legacy_icons=true
-            ;;
         n)
             opt_notification=true
-            ;;
-        p)
-            opt_show_volume_progress=true
-            ;;
-        t)
-            statusline="${OPTARG}"
-            ;;
-        u)
-            signal="${OPTARG}"
-            ;;
-        v)
-            opt_set_backlight=true
-            backlight_set="${OPTARG}"
             ;;
         y)
             opt_use_dunstify=true
@@ -179,13 +141,3 @@ if ${opt_notification}; then
     notify_backlight
 fi
 
-if [ -n "${signal}" ]; then
-    if [ -z "${statusline}" ]; then
-        usage
-    fi
-    update_statusline "${signal}" "${statusline}"
-else
-    if [ -n "${statusline}" ]; then
-        usage
-    fi
-fi
