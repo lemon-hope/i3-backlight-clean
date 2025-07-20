@@ -28,7 +28,7 @@ get_backlight() {
 # Arguments:
 #   Step        (integer) Percentage to increase by.
 raise_backlight() {
-    brightnessctl set +$1%
+    brightnessctl set +"$1"%
 }
 
 
@@ -37,7 +37,7 @@ raise_backlight() {
 # Arguments:
 #   Step        (integer) Percentage to decrease by.
 lower_backlight() {
-    brightnessctl set $1%-
+    brightnessctl set "$1"%-
 }
 
 
@@ -52,7 +52,7 @@ notify_backlight() {
         text="$text $progress"
     fi
 
-    dunstify -i "$icon" -t $expires -h int:value:"$br" -h string:synchronous:brightness "$text" -r 1000
+    dunstify -i "$icon" -t "$expires" -h int:value:"$br" -h string:synchronous:brightness "$text" -r 1000
 }
 
 
